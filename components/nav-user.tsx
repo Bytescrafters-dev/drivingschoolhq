@@ -3,8 +3,6 @@
 import {
   IconDotsVertical,
   IconLogout,
-  IconNotification,
-  IconSettings,
   IconUserCircle,
 } from "@tabler/icons-react";
 
@@ -26,10 +24,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useLogin } from "@/hooks/auth/useLogin";
+import { useLogout } from "@/hooks/auth/useLogout";
 import { useMe } from "@/hooks/my-profile/useProfile";
-import { MY_PROFILE, SETTINGS } from "@/shared/constants/pageUrls";
-import { useRouter } from "next/navigation";
+import { MY_PROFILE } from "@/shared/constants/pageUrls";
 import Link from "next/link";
 
 const getDisplayName = (fullName?: string | null, email?: string | null) =>
@@ -47,23 +44,13 @@ const getInitials = (name: string) => {
 
 export function NavUser() {
   const { isMobile } = useSidebar();
-  const router = useRouter();
-  const { logout, loading: logoutPending } = useLogin();
+  const logout = useLogout();
   const {
     data: profile,
     isLoading: profileLoading,
     isError: profileError,
     refetch: refetchProfile,
   } = useMe();
-
-  const onClickLogout = async () => {
-    const success = await logout();
-
-    if (success) {
-      router.push("/login");
-      router.refresh();
-    }
-  };
 
   if (profileLoading && !profile) {
     return (
@@ -100,8 +87,11 @@ export function NavUser() {
     );
   }
 
-  const displayName = getDisplayName(profile?.fullName, profile?.email);
-  const email = profile?.email ?? "—";
+  const displayName = getDisplayName(
+    profile?.user.fullName,
+    profile?.user.email,
+  );
+  const email = profile?.user.email ?? "—";
   const initials = getInitials(displayName);
 
   return (
@@ -114,7 +104,9 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
-                <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
+                <AvatarFallback className="rounded-lg">
+                  {initials}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{displayName}</span>
@@ -154,27 +146,17 @@ export function NavUser() {
                   className="flex items-center gap-2 w-full"
                 >
                   <IconUserCircle />
-                  Account
+                  Profile
                 </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link
-                  href={SETTINGS}
-                  className="flex items-center gap-2 w-full"
-                >
-                  <IconSettings />
-                  Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem disabled>
-                <IconNotification />
-                Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onClickLogout} disabled={logoutPending}>
+            <DropdownMenuItem
+              onSelect={() => logout.mutate()}
+              disabled={logout.isPending}
+            >
               <IconLogout />
-              {logoutPending ? "Logging out..." : "Log out"}
+              {logout.isPending ? "Logging out..." : "Log out"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

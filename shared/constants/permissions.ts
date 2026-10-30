@@ -1,16 +1,11 @@
 /**
- * Platform permission strings returned by `GET /platform/auth/me`.
+ * Tenant permission strings returned in `GET /tenant/auth/me` (`user.permissions`).
+ * Extend as backend chunks add permissions.
  * Frontend checks are UX only; the backend is the authorization boundary.
  */
-export const PlatformPermission = {
-  PLANS_READ: "PLANS_READ",
-  PLANS_MANAGE: "PLANS_MANAGE",
-  TENANTS_READ: "TENANTS_READ",
-  TENANTS_MANAGE: "TENANTS_MANAGE",
-  SUBSCRIPTIONS_READ: "SUBSCRIPTIONS_READ",
-  SUBSCRIPTIONS_MANAGE: "SUBSCRIPTIONS_MANAGE",
-  PLATFORM_AUDIT_READ: "PLATFORM_AUDIT_READ",
+export const TenantPermission = {
+  BRANCHES_MANAGE: "BRANCHES_MANAGE",
 } as const;
 
-export type PlatformPermission =
-  (typeof PlatformPermission)[keyof typeof PlatformPermission];
+export type TenantPermission =
+  (typeof TenantPermission)[keyof typeof TenantPermission];

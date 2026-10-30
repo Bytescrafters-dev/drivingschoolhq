@@ -1,42 +1,62 @@
 import { NextResponse } from "next/server";
-import { clearAuthCookies, getAccessTokenFromCookies } from "@/lib/cookies";
-import { env } from "@/lib/env";
+import { applyAuthCookies } from "@/lib/cookies";
+import { forbiddenOrigin, isSameOriginRequest } from "@/lib/same-origin";
+import {
+  discardBody,
+  proxyToBackendWithAccess,
+  readRequestBody,
+  sessionExpiredResponse,
+} from "@/lib/with-auth-proxy";
+import { readJsonBody } from "@/lib/api/client";
 
 export const POST = async (req: Request) => {
-  const accessToken = await getAccessTokenFromCookies();
-  if (!accessToken) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
+  if (!(await isSameOriginRequest(req))) return forbiddenOrigin();
 
   try {
-    const { currentPassword, newPassword } = await req.json();
+    const body = await readRequestBody(req);
+    const result = await proxyToBackendWithAccess(
+      req,
+      "tenant/auth/change-password",
+      { body, method: "POST" },
+    );
 
-    const res = await fetch(`${env.BACKEND_URL}/tenant/auth/change-password`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({ currentPassword, newPassword }),
-    });
+    if (result.expired) return sessionExpiredResponse();
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      return NextResponse.json(
-        { message: data?.message ?? "Failed to change password" },
+    const { res, tokens } = result;
+    let response: NextResponse;
+
+    if (res.ok) {
+      // Backend responds 204. The current session stays valid (only other
+      // sessions are signed out), so the cookies are kept.
+      await discardBody(res);
+      response = NextResponse.json({ ok: true });
+    } else {
+      const data = (await readJsonBody(res)) as
+        { code?: unknown; message?: unknown } | undefined;
+      response = NextResponse.json(
+        {
+          statusCode: res.status,
+          code: typeof data?.code === "string" ? data.code : undefined,
+          message: data?.message ?? "Failed to change password",
+        },
         { status: res.status },
       );
     }
 
-    // Backend responds 204 No Content. The admin must sign in again with the
-    // new credentials, so drop the current session cookies.
-    await clearAuthCookies();
-
-    return NextResponse.json({ ok: true });
-  } catch {
+    if (tokens) applyAuthCookies(response, tokens);
+    return response;
+  } catch (err) {
+    console.error(
+      "[change-password] error:",
+      err instanceof Error ? err.message : String(err),
+    );
     return NextResponse.json(
-      { message: "Change password error" },
-      { status: 500 },
+      {
+        statusCode: 502,
+        code: "BAD_GATEWAY",
+        message: "Unable to reach the server. Try again.",
+      },
+      { status: 502 },
     );
   }
 };

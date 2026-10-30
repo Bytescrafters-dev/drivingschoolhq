@@ -1,34 +1,35 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { DASHBOARD } from "@/shared/constants/pageUrls";
+import { REFRESH_COOKIE_NAME } from "@/lib/cookie-names";
+import { DASHBOARD, LOGIN } from "@/shared/constants/pageUrls";
 
-const JWT_COOKIE = process.env.JWT_COOKIE_NAME ?? "dev_drivingschoolhq_jwt";
-// Dashboard routes. "/" matches only the dashboard home; other entries also
-// match their sub-paths. Add new top-level dashboard sections here.
-const PROTECTED = [DASHBOARD];
-
-const isProtected = (path: string) =>
-  PROTECTED.some((p) =>
-    p === "/" ? path === "/" : path === p || path.startsWith(`${p}/`),
-  );
-
+/**
+ * Presence check only. Checks the REFRESH cookie (7 days), not the access
+ * cookie (15 minutes): the proxy can refresh an expired access token, so
+ * checking it would bounce users to login unnecessarily. Token validity is
+ * owned by the BFF refresh flow and the backend.
+ */
 export const middleware = (req: NextRequest) => {
-  const path = req.nextUrl.pathname;
+  const { pathname, search } = req.nextUrl;
+  const hasSession = Boolean(req.cookies.get(REFRESH_COOKIE_NAME)?.value);
 
-  const needsAuth = isProtected(path);
+  if (pathname === LOGIN) {
+    return hasSession
+      ? NextResponse.redirect(new URL(DASHBOARD, req.url))
+      : NextResponse.next();
+  }
 
-  if (!needsAuth) return NextResponse.next();
-
-  const token = req.cookies.get(JWT_COOKIE)?.value;
-
-  if (!token) {
-    const url = new URL("/login", req.url);
-    url.searchParams.set("next", path);
+  // Everything else matched (dashboard pages and /forceChangePassword)
+  // needs a session.
+  if (!hasSession) {
+    const url = new URL(LOGIN, req.url);
+    url.searchParams.set("next", `${pathname}${search}`);
     return NextResponse.redirect(url);
   }
   return NextResponse.next();
 };
 
 export const config = {
-  matcher: ["/((?!_next|favicon.ico|api/auth/login).*)"],
+  // API routes do their own auth; skip Next internals and static files.
+  matcher: ["/((?!api|_next|favicon.ico|.*\\..*).*)"],
 };

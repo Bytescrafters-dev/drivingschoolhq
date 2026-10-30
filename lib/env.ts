@@ -1,19 +1,23 @@
 import { z } from "zod";
+import {
+  DEFAULT_JWT_COOKIE_NAME,
+  DEFAULT_REFRESH_COOKIE_NAME,
+} from "./cookie-names";
 
 const EnvSchema = z.object({
   BACKEND_URL: z
     .string()
     .min(1, "BACKEND_URL is required")
     .transform((v) => v.trim().replace(/\/$/, "")),
-  JWT_COOKIE_NAME: z.string().min(1).default("dev_drivingschoolhq_jwt"),
-  REFRESH_COOKIE_NAME: z.string().min(1).default("dev_drivingschoolhq_refresh"),
+  JWT_COOKIE_NAME: z.string().min(1).default(DEFAULT_JWT_COOKIE_NAME),
+  REFRESH_COOKIE_NAME: z.string().min(1).default(DEFAULT_REFRESH_COOKIE_NAME),
   COOKIE_DOMAIN: z.string().optional(),
 });
 
 const parsed = EnvSchema.safeParse({
   BACKEND_URL: process.env.BACKEND_URL,
-  JWT_COOKIE_NAME: process.env.JWT_COOKIE_NAME,
-  REFRESH_COOKIE_NAME: process.env.REFRESH_COOKIE_NAME,
+  JWT_COOKIE_NAME: process.env.JWT_COOKIE_NAME || undefined,
+  REFRESH_COOKIE_NAME: process.env.REFRESH_COOKIE_NAME || undefined,
   COOKIE_DOMAIN: process.env.COOKIE_DOMAIN,
 });
 

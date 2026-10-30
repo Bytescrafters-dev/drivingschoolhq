@@ -4,34 +4,33 @@ import {
   getRefreshTokenFromCookies,
   setAuthCookies,
 } from "@/lib/cookies";
-import {
-  getAccessMaxAge,
-  getRefreshMaxAge,
-  refreshPlatformTokens,
-} from "@/lib/auth-tokens";
+import { refreshTenantTokensOnce } from "@/lib/auth-tokens";
+import { forbiddenOrigin, isSameOriginRequest } from "@/lib/same-origin";
+import type { LoginResponse } from "@/types/auth";
 
-export const POST = async () => {
+// Rarely needed by the client: the proxy refreshes on its own.
+export const POST = async (req: Request) => {
+  if (!(await isSameOriginRequest(req))) return forbiddenOrigin();
+
   const refreshToken = await getRefreshTokenFromCookies();
-  if (!refreshToken) {
-    return NextResponse.json({ message: "No refresh token" }, { status: 401 });
-  }
+  const tokens = refreshToken
+    ? await refreshTenantTokensOnce(refreshToken, req)
+    : null;
 
-  const tokens = await refreshPlatformTokens(refreshToken);
   if (!tokens) {
     await clearAuthCookies();
-    return NextResponse.json({ message: "Refresh failed" }, { status: 401 });
+    return NextResponse.json(
+      { statusCode: 401, code: "SESSION_EXPIRED", message: "Refresh failed" },
+      { status: 401 },
+    );
   }
 
-  await setAuthCookies(
-    tokens.accessToken,
-    getAccessMaxAge(tokens),
-    tokens.refreshToken,
-    getRefreshMaxAge(tokens),
-  );
+  await setAuthCookies(tokens);
 
   // Tokens stay in httpOnly cookies; never return them to the browser.
-  return NextResponse.json({
+  const response: LoginResponse = {
     ok: true,
     mustChangePassword: tokens.mustChangePassword === true,
-  });
+  };
+  return NextResponse.json(response);
 };

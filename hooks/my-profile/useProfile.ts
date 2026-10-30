@@ -1,59 +1,28 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getErrorMessage } from "@/lib/utils";
-import { apiFetch } from "@/lib/api/client";
-// import type { PlatformAdminMe } from "@/types/auth";
-
-export const PROFILE_QUERY_KEY = ["profile", "me"];
+import { changePassword, fetchMe } from "@/lib/api/auth";
+import type { ApiError } from "@/lib/api/client";
+import { queryKeys } from "@/shared/constants/query-keys";
+import type { ChangePasswordInput } from "@/types/auth";
 
 /**
- * Current platform admin (identity + permissions).
- * Cached under `PROFILE_QUERY_KEY`, so every caller shares one request.
+ * Current tenant user, tenant and accessible branches (`GET /tenant/auth/me`).
+ * Shared cache entry: every caller reuses one request.
  */
-// export const useMe = () =>
-//   useQuery({
-//     queryKey: PROFILE_QUERY_KEY,
-//     queryFn: () => apiFetch<PlatformAdminMe>("tenant/auth/me"),
-//   });
-
-type ChangePasswordInput = { currentPassword: string; newPassword: string };
-
-const changePasswordRequest = async (
-  data: ChangePasswordInput,
-): Promise<boolean> => {
-  const response = await fetch("/api/auth/change-password", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+export const useMe = () =>
+  useQuery({
+    queryKey: queryKeys.me,
+    queryFn: fetchMe,
   });
 
-  if (!response.ok) {
-    const msg =
-      (await response.json().catch(() => ({}))).message ??
-      "Failed to change password!";
-    throw new Error(msg);
-  }
-  return true;
-};
-
-export const useProfile = () => {
+/**
+ * Changes the signed-in user's password. The current session continues;
+ * the backend signs out the user's other sessions.
+ */
+export const useChangePassword = () => {
   const queryClient = useQueryClient();
 
-  const changePasswordMutation = useMutation<
-    boolean,
-    Error,
-    ChangePasswordInput
-  >({
-    mutationFn: changePasswordRequest,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: PROFILE_QUERY_KEY,
-      });
-    },
+  return useMutation<{ ok: true }, ApiError, ChangePasswordInput>({
+    mutationFn: changePassword,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.me }),
   });
-
-  return {
-    changePassword: changePasswordMutation.mutateAsync,
-    changingPassword: changePasswordMutation.isPending,
-    changePasswordError: getErrorMessage(changePasswordMutation.error),
-  };
 };

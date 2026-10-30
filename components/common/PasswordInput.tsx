@@ -18,12 +18,14 @@ export default function PasswordInput({
           type={show ? "text" : "password"}
           placeholder={placeholder}
           className="pr-10"
+          aria-invalid={error ? true : undefined}
           {...props}
         />
         <button
           type="button"
           tabIndex={-1}
           onClick={() => setShow((v) => !v)}
+          aria-label={show ? "Hide password" : "Show password"}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
         >
           {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

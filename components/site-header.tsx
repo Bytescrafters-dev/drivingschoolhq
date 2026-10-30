@@ -3,34 +3,15 @@
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
-import {
-  DASHBOARD,
-  PRICE_PLAN_CREATE,
-  PRICE_PLAN_UPDATE_PREFIX,
-  PRICE_PLANS,
-  TENANT_CREATE,
-  TENANT_UPDATE_PREFIX,
-  TENANTS,
-} from "@/shared/constants/pageUrls";
+import { useMe } from "@/hooks/my-profile/useProfile";
+import { DASHBOARD, MY_PROFILE } from "@/shared/constants/pageUrls";
 
 const resolvePageHeader = (pathname: string) => {
-  if (pathname.startsWith(`${PRICE_PLAN_UPDATE_PREFIX}/`)) {
-    return "Price Plan Details";
-  }
-  if (pathname.startsWith(`${TENANT_UPDATE_PREFIX}/`)) {
-    return "Tenant Details";
-  }
   switch (pathname) {
     case DASHBOARD:
       return "Dashboard";
-    case TENANTS:
-      return "Tenants";
-    case TENANT_CREATE:
-      return "Create Tenant";
-    case PRICE_PLANS:
-      return "Price Plans";
-    case PRICE_PLAN_CREATE:
-      return "Create Price Plan";
+    case MY_PROFILE:
+      return "My Profile";
     default:
       return "Dashboard";
   }
@@ -38,6 +19,7 @@ const resolvePageHeader = (pathname: string) => {
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const { data: me } = useMe();
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -50,7 +32,11 @@ export function SiteHeader() {
         <h1 className="text-base font-medium">
           {resolvePageHeader(pathname ?? "")}
         </h1>
-        <div className="ml-auto text-base font-medium">Super Admin</div>
+        {me && (
+          <div className="text-muted-foreground ml-auto hidden truncate text-sm font-medium sm:block">
+            {me.tenant.displayName}
+          </div>
+        )}
       </div>
     </header>
   );
