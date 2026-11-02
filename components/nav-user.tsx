@@ -4,6 +4,7 @@ import {
   IconDotsVertical,
   IconLogout,
   IconUserCircle,
+  IconSettings,
 } from "@tabler/icons-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -26,7 +27,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useLogout } from "@/hooks/auth/useLogout";
 import { useMe } from "@/hooks/my-profile/useProfile";
-import { MY_PROFILE } from "@/shared/constants/pageUrls";
+import { MY_PROFILE, SETTINGS } from "@/shared/constants/pageUrls";
 import Link from "next/link";
 
 const getDisplayName = (fullName?: string | null, email?: string | null) =>
@@ -147,6 +148,15 @@ export function NavUser() {
                 >
                   <IconUserCircle />
                   Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  href={SETTINGS}
+                  className="flex items-center gap-2 w-full"
+                >
+                  <IconSettings />
+                  Settings
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>

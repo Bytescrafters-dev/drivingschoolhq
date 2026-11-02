@@ -1,3 +1,5 @@
+import type { District } from "@/shared/constants/districts";
+
 /**
  * Backend token pair from `POST /tenant/auth/login` and `/tenant/auth/refresh`.
  * SERVER-SIDE ONLY: handled by the BFF and stored in httpOnly cookies.
@@ -39,7 +41,7 @@ export type TenantAccessStatus = "ACTIVE" | "GRACE_PERIOD" | "SUSPENDED";
 export type TenantMeBranch = {
   id: string;
   name: string;
-  district: string;
+  district: District;
   isDefault: boolean;
 };
 

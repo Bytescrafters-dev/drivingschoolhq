@@ -3,15 +3,23 @@
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
-import { useMe } from "@/hooks/my-profile/useProfile";
-import { DASHBOARD, MY_PROFILE } from "@/shared/constants/pageUrls";
+import { BranchSwitcher } from "@/components/branches/branch-switcher";
+import {
+  DASHBOARD,
+  MY_PROFILE,
+  SETTINGS,
+  SETTINGS_BRANCHES,
+} from "@/shared/constants/pageUrls";
 
 const resolvePageHeader = (pathname: string) => {
+  if (pathname.startsWith(SETTINGS_BRANCHES)) return "Branches";
   switch (pathname) {
     case DASHBOARD:
       return "Dashboard";
     case MY_PROFILE:
       return "My Profile";
+    case SETTINGS:
+      return "Settings";
     default:
       return "Dashboard";
   }
@@ -19,7 +27,6 @@ const resolvePageHeader = (pathname: string) => {
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const { data: me } = useMe();
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -32,11 +39,9 @@ export function SiteHeader() {
         <h1 className="text-base font-medium">
           {resolvePageHeader(pathname ?? "")}
         </h1>
-        {me && (
-          <div className="text-muted-foreground ml-auto hidden truncate text-sm font-medium sm:block">
-            {me.tenant.displayName}
-          </div>
-        )}
+        <div className="ml-auto min-w-0">
+          <BranchSwitcher />
+        </div>
       </div>
     </header>
   );

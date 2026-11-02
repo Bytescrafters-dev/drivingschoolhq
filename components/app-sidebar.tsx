@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { IconDashboard } from "@tabler/icons-react";
+import { IconDashboard, IconSettings } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -16,7 +16,11 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { useMe } from "@/hooks/my-profile/useProfile";
-import { DASHBOARD } from "@/shared/constants/pageUrls";
+import {
+  DASHBOARD,
+  SETTINGS,
+  SETTINGS_BRANCHES,
+} from "@/shared/constants/pageUrls";
 
 // Central dashboard navigation. Add Administration / Customers sections here
 // as those features are implemented.
@@ -27,6 +31,13 @@ const navMain = [
     icon: IconDashboard,
     collapsible: false,
     items: [],
+  },
+  {
+    title: "Settings",
+    url: SETTINGS,
+    icon: IconSettings,
+    collapsible: true,
+    items: [{ title: "Branches", url: SETTINGS_BRANCHES }],
   },
 ];
 

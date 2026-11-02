@@ -66,18 +66,29 @@ const redirectToForceChangePassword = () => {
  * - 403 PASSWORD_CHANGE_REQUIRED sends the user to the change-password page.
  * - Other non-2xx responses throw an `ApiError` with the backend message/code.
  * - 204 / empty bodies resolve to `undefined`.
+ * - `branchId` adds the `X-Branch-Id` header for branch-scoped endpoints.
  */
+export type ApiFetchInit = RequestInit & {
+  /**
+   * Branch-scoped endpoints: the active branch id, sent as `X-Branch-Id`.
+   * Pass the same id that is in the query key.
+   */
+  branchId?: string;
+};
+
 export const apiFetch = async <T>(
   path: string,
-  init?: RequestInit,
+  init?: ApiFetchInit,
 ): Promise<T> => {
-  const headers = new Headers(init?.headers);
-  if (init?.body && !headers.has("content-type")) {
+  const { branchId, ...requestInit } = init ?? {};
+  const headers = new Headers(requestInit.headers);
+  if (requestInit.body && !headers.has("content-type")) {
     headers.set("content-type", "application/json");
   }
+  if (branchId) headers.set("x-branch-id", branchId);
 
   const res = await fetch(`/api/proxy/${path.replace(/^\//, "")}`, {
-    ...init,
+    ...requestInit,
     headers,
   });
 
