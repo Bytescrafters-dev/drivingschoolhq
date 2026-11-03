@@ -51,6 +51,8 @@ export type TenantMe = {
     id: string;
     email: string;
     fullName: string;
+    /** "+94…", or null when not set. */
+    phone: string | null;
     role: TenantRole;
     mustChangePassword: boolean;
     branchAccess: TenantUserBranchAccess;
@@ -69,3 +71,19 @@ export type TenantMe = {
   };
   branches: TenantMeBranch[];
 };
+
+/** `PATCH /tenant/me` response. */
+export type MyProfile = {
+  id: string;
+  email: string;
+  fullName: string;
+  phone: string | null;
+  nic: string | null;
+  role: TenantRole;
+};
+
+/** `phone: null` clears it (not allowed for the owner). */
+export type UpdateMyProfileInput = Partial<{
+  fullName: string;
+  phone: string | null;
+}>;

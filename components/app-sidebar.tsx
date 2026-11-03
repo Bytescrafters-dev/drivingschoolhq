@@ -16,15 +16,18 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { useMe } from "@/hooks/my-profile/useProfile";
+import { usePermissions } from "@/hooks/auth/usePermissions";
+import { TenantPermission } from "@/shared/constants/permissions";
 import {
   DASHBOARD,
   SETTINGS,
   SETTINGS_BRANCHES,
+  SETTINGS_STAFF,
 } from "@/shared/constants/pageUrls";
 
 // Central dashboard navigation. Add Administration / Customers sections here
-// as those features are implemented.
-const navMain = [
+// as those features are implemented. Permission-gated items are UX only.
+const buildNav = (canManageStaff: boolean) => [
   {
     title: "Dashboard",
     url: DASHBOARD,
@@ -37,12 +40,17 @@ const navMain = [
     url: SETTINGS,
     icon: IconSettings,
     collapsible: true,
-    items: [{ title: "Branches", url: SETTINGS_BRANCHES }],
+    items: [
+      { title: "Branches", url: SETTINGS_BRANCHES },
+      ...(canManageStaff ? [{ title: "Staff", url: SETTINGS_STAFF }] : []),
+    ],
   },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: me } = useMe();
+  const { hasPermission } = usePermissions();
+  const navMain = buildNav(hasPermission(TenantPermission.STAFF_MANAGE));
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>

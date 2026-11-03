@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { PageSectionHeader } from "@/components/common/page-section-header";
+import { PlanLimitDialog } from "@/components/common/plan-limit-dialog";
 import { useActiveBranch } from "@/components/branches/active-branch-provider";
 import { usePermissions } from "@/hooks/auth/usePermissions";
 import { useMe } from "@/hooks/my-profile/useProfile";
@@ -35,7 +36,6 @@ import {
 import { BranchFormDialog } from "./branch-form-dialog";
 import { CloseBranchDialog } from "./close-branch-dialog";
 import { LockedOutStaffDialog } from "./locked-out-staff-dialog";
-import { PlanLimitDialog } from "./plan-limit-dialog";
 import { BranchDetailSheet } from "./branch-detail-sheet";
 
 /** Toast for action errors not already handled app-wide. */
@@ -212,6 +212,8 @@ export const BranchesView = () => {
         onOpenChange={(open) => !open && setCloseResult(null)}
       />
       <PlanLimitDialog
+        title="Branch limit reached"
+        description="Your plan's branch limit is reached. Close a branch or contact DrivingSchoolHQ to upgrade."
         message={planLimitMessage}
         onOpenChange={(open) => !open && setPlanLimitMessage(null)}
       />

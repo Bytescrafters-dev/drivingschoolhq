@@ -16,9 +16,24 @@ const MESSAGES: Record<string, string> = {
   BRANCH_NOT_CLOSED: "This branch is already open.",
   LAST_ACTIVE_BRANCH: "A school must keep at least one active branch.",
   PLAN_LIMIT_REACHED:
-    "Your plan's branch limit is reached. Close a branch or contact DrivingSchoolHQ to upgrade.",
+    "Your plan's limit is reached. Contact DrivingSchoolHQ to upgrade.",
   INVALID_PHONE: "Enter a valid Sri Lankan phone number.",
   BRANCH_ACCESS_DENIED: "You no longer have access to this branch.",
+  NO_ACTIVE_BRANCH:
+    "None of your branches is open right now. Ask your school owner or admin.",
+  STAFF_NOT_FOUND: "This staff member doesn't exist or you can't access them.",
+  STAFF_MANAGEMENT_DENIED: "You can't change this person.",
+  CANNOT_MANAGE_SELF: "Use My profile to change your own account.",
+  ROLE_NOT_ASSIGNABLE: "You can't assign that role.",
+  BRANCH_ACCESS_NOT_GRANTABLE: "You can't grant access to that branch.",
+  BRANCH_SELECTION_INVALID:
+    "Check the branch selection: choose at least one open branch and a default among them.",
+  TENANT_USER_EMAIL_TAKEN: "Someone in your school already uses this email.",
+  TENANT_USER_NIC_TAKEN: "Someone in your school already has this NIC.",
+  INVALID_NIC: "Enter a valid NIC (9 digits with V or X, or 12 digits).",
+  STAFF_ALREADY_DISABLED: "This person is already disabled.",
+  STAFF_ALREADY_ACTIVE: "This person is already active.",
+  PHONE_REQUIRED: "The owner must keep a phone number.",
 };
 
 /**

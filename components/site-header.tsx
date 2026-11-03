@@ -9,10 +9,12 @@ import {
   MY_PROFILE,
   SETTINGS,
   SETTINGS_BRANCHES,
+  SETTINGS_STAFF,
 } from "@/shared/constants/pageUrls";
 
 const resolvePageHeader = (pathname: string) => {
   if (pathname.startsWith(SETTINGS_BRANCHES)) return "Branches";
+  if (pathname.startsWith(SETTINGS_STAFF)) return "Staff";
   switch (pathname) {
     case DASHBOARD:
       return "Dashboard";

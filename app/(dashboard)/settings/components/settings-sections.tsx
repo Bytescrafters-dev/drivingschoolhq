@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { usePermissions } from "@/hooks/auth/usePermissions";
 import { TenantPermission } from "@/shared/constants/permissions";
-import { SETTINGS_BRANCHES } from "@/shared/constants/pageUrls";
+import { SETTINGS_BRANCHES, SETTINGS_STAFF } from "@/shared/constants/pageUrls";
 
 type Section = {
   title: string;
@@ -80,6 +80,7 @@ export const SettingsSections = () => {
             title: "Staff",
             description: "Manage staff accounts, roles and branch access.",
             icon: UsersIcon,
+            href: SETTINGS_STAFF,
           },
         ]
       : []),

@@ -1,8 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { changePassword, fetchMe } from "@/lib/api/auth";
+import { updateMyProfile } from "@/lib/api/my-profile";
 import type { ApiError } from "@/lib/api/client";
 import { queryKeys } from "@/shared/constants/query-keys";
-import type { ChangePasswordInput } from "@/types/auth";
+import type {
+  ChangePasswordInput,
+  MyProfile,
+  UpdateMyProfileInput,
+} from "@/types/auth";
 
 /**
  * Current tenant user, tenant and accessible branches (`GET /tenant/auth/me`).
@@ -23,6 +28,16 @@ export const useChangePassword = () => {
 
   return useMutation<{ ok: true }, ApiError, ChangePasswordInput>({
     mutationFn: changePassword,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.me }),
+  });
+};
+
+/** Edit your own name/phone. Refetches `me` so the header/sidebar update. */
+export const useUpdateMyProfile = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<MyProfile, ApiError, UpdateMyProfileInput>({
+    mutationFn: updateMyProfile,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.me }),
   });
 };
