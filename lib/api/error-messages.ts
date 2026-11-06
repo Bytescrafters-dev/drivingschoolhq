@@ -34,6 +34,12 @@ const MESSAGES: Record<string, string> = {
   STAFF_ALREADY_DISABLED: "This person is already disabled.",
   STAFF_ALREADY_ACTIVE: "This person is already active.",
   PHONE_REQUIRED: "The owner must keep a phone number.",
+  INVALID_LICENCE_DATES: "Expiry must be after the issue date.",
+  UNKNOWN_VEHICLE_CLASS:
+    "One of the vehicle classes isn't recognised. Reload and try again.",
+  BRANCH_LICENCE_MISSING: "Add this branch's licence first.",
+  VEHICLE_CLASS_NOT_PERMITTED:
+    "The branch grade changed. Review the classes again.",
 };
 
 /**

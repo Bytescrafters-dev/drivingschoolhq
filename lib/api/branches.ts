@@ -2,6 +2,7 @@ import { apiFetch } from "@/lib/api/client";
 import type {
   Branch,
   BranchContext,
+  BranchDetail,
   BranchInput,
   BranchList,
   CloseBranchResponse,
@@ -15,7 +16,7 @@ export const fetchBranches = (includeClosed: boolean) =>
   apiFetch<BranchList>(`tenant/branches?includeClosed=${includeClosed}`);
 
 export const fetchBranch = (id: string) =>
-  apiFetch<Branch>(`tenant/branches/${encodeURIComponent(id)}`);
+  apiFetch<BranchDetail>(`tenant/branches/${encodeURIComponent(id)}`);
 
 export const createBranch = (input: BranchInput) =>
   apiFetch<Branch>("tenant/branches", { method: "POST", body: json(input) });

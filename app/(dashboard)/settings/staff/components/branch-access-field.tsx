@@ -14,7 +14,7 @@ import {
 import { districtLabel } from "@/shared/constants/districts";
 import type { StaffOptions } from "@/types/staff";
 import type { BranchAccessValues } from "./staff-form-schemas";
-import { FieldError, errorProps } from "./field-error";
+import { FieldError, errorProps } from "@/components/common/field-error";
 
 /**
  * ALL/SELECTED access, the branch checklist and the default branch.

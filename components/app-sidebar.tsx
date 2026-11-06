@@ -35,16 +35,6 @@ const buildNav = (canManageStaff: boolean) => [
     collapsible: false,
     items: [],
   },
-  {
-    title: "Settings",
-    url: SETTINGS,
-    icon: IconSettings,
-    collapsible: true,
-    items: [
-      { title: "Branches", url: SETTINGS_BRANCHES },
-      ...(canManageStaff ? [{ title: "Staff", url: SETTINGS_STAFF }] : []),
-    ],
-  },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

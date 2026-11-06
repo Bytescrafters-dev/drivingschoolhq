@@ -4,7 +4,7 @@ import { useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { StaffDetailsValues } from "./staff-form-schemas";
-import { FieldError, errorProps } from "./field-error";
+import { FieldError, errorProps } from "@/components/common/field-error";
 
 /** Name, email, phone and NIC. Used by Add staff and Edit details. */
 export const StaffDetailsFields = () => {

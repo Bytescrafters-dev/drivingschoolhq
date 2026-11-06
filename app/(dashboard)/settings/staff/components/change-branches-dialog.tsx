@@ -19,8 +19,8 @@ import { BranchAccessField } from "./branch-access-field";
 import {
   FormErrorAlert,
   SubmitButton,
-  WithStaffOptions,
-} from "./dialog-helpers";
+} from "@/components/common/form-feedback";
+import { WithStaffOptions } from "./dialog-helpers";
 import {
   branchAccessShape,
   refineBranchAccess,

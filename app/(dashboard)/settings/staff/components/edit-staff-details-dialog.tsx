@@ -17,7 +17,10 @@ import {
 import { useUpdateStaff } from "@/hooks/staff/useStaffMutations";
 import { toLocalPhone } from "@/lib/phone";
 import type { Staff, UpdateStaffInput } from "@/types/staff";
-import { FormErrorAlert, SubmitButton } from "./dialog-helpers";
+import {
+  FormErrorAlert,
+  SubmitButton,
+} from "@/components/common/form-feedback";
 import { StaffDetailsFields } from "./staff-details-fields";
 import {
   nicOrNull,

@@ -1,6 +1,7 @@
 "use client";
 
-import { SearchXIcon } from "lucide-react";
+import Link from "next/link";
+import { FileBadgeIcon, SearchXIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -14,7 +15,10 @@ import { useBranch } from "@/hooks/branches/useBranches";
 import { ApiError } from "@/lib/api/client";
 import { formatDateTime } from "@/lib/dates";
 import { formatLkPhone } from "@/lib/phone";
+import { BranchReadinessBadges } from "@/components/branches/branch-readiness-badges";
 import { districtLabel } from "@/shared/constants/districts";
+import { gradeLabel } from "@/shared/constants/grades";
+import { settingsBranchProfile } from "@/shared/constants/pageUrls";
 import { BranchStatusBadge } from "./branch-status-badge";
 
 const Row = ({
@@ -85,7 +89,7 @@ const BranchDetail = ({ id }: { id: string }) => {
         <SheetTitle>{branch.name}</SheetTitle>
         <SheetDescription>{districtLabel(branch.district)}</SheetDescription>
       </SheetHeader>
-      <dl className="grid gap-4 px-4 pb-4">
+      <dl className="grid gap-4 px-4">
         <Row label="Status">
           <BranchStatusBadge branch={branch} />
         </Row>
@@ -94,7 +98,24 @@ const BranchDetail = ({ id }: { id: string }) => {
         <Row label="Phone">{formatLkPhone(branch.phone)}</Row>
         <Row label="Created">{formatDateTime(branch.createdAt)}</Row>
         <Row label="Last updated">{formatDateTime(branch.updatedAt)}</Row>
+        <Row label="Grade">
+          {branch.profile.grade ? gradeLabel(branch.profile.grade) : "Not set"}
+        </Row>
+        <Row label="Vehicle classes">
+          {branch.profile.offeredVehicleClasses.join(", ") || "None"}
+        </Row>
       </dl>
+      <div className="grid justify-items-start gap-3 px-4 pb-4">
+        <div className="flex flex-wrap gap-1">
+          <BranchReadinessBadges readiness={branch.profile.readiness} />
+        </div>
+        <Button asChild variant="outline">
+          <Link href={settingsBranchProfile(branch.id)}>
+            <FileBadgeIcon />
+            Open profile
+          </Link>
+        </Button>
+      </div>
     </>
   );
 };

@@ -17,7 +17,10 @@ import {
 import { useResetStaffPassword } from "@/hooks/staff/useStaffMutations";
 import { generateTemporaryPassword } from "@/lib/temp-password";
 import type { Staff } from "@/types/staff";
-import { FormErrorAlert, SubmitButton } from "./dialog-helpers";
+import {
+  FormErrorAlert,
+  SubmitButton,
+} from "@/components/common/form-feedback";
 import { temporaryPasswordSchema } from "./staff-form-schemas";
 import {
   copyWithToast,

@@ -15,6 +15,12 @@ export const calendarDateToDate = (value: string): Date | null => {
   return new Date(Number(y), Number(m) - 1, Number(d));
 };
 
+/** True for a real calendar date like "2026-02-28" (not "2026-02-30"). */
+export const isValidCalendarDate = (value: string): boolean => {
+  const date = calendarDateToDate(value);
+  return date !== null && dateToCalendarDate(date) === value;
+};
+
 /** Local Date → "YYYY-MM-DD" using its calendar fields. */
 export const dateToCalendarDate = (date: Date): string =>
   format(date, "yyyy-MM-dd");

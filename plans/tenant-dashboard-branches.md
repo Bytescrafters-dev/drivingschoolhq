@@ -202,7 +202,11 @@ type Branch = {
   createdAt: string;
   updatedAt: string;
 };
-type BranchListItem = Branch & { isDefault: boolean }; // isDefault = the user's own default
+type BranchListItem = Branch & {
+  isDefault: boolean; // the user's own default
+  profile: BranchProfileSummary; // grade, licence, classes, readiness: see tenant-dashboard-branch-profile.md
+};
+// GET /tenant/branches/:id also returns `profile`; create/edit/close/reopen responses don't.
 
 type TenantMe = {
   user: {

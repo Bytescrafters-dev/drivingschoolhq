@@ -5,7 +5,7 @@ const SettingsPage = () => (
   <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
     <PageSectionHeader
       title="Settings"
-      description="Manage your driving school's branches and staff."
+      description="Manage your branch profile, branches and staff."
     />
     <SettingsSections />
   </div>

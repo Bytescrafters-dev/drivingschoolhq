@@ -6,7 +6,10 @@ export const queryKeys = {
     all: ["branches"] as const,
     list: (includeClosed: boolean) => ["branches", { includeClosed }] as const,
     detail: (id: string) => ["branches", id] as const,
+    profile: (id: string) => ["branches", id, "profile"] as const,
   },
+  /** Reference data: never changes during a session. */
+  vehicleClasses: ["vehicle-classes"] as const,
   /** Branch-scoped: validates the tab's active branch. */
   branchContext: (branchId: string) => ["branch-context", branchId] as const,
   staff: {

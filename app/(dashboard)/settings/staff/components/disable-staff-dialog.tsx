@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useDisableStaff } from "@/hooks/staff/useStaffMutations";
 import type { Staff } from "@/types/staff";
-import { FormErrorAlert } from "./dialog-helpers";
+import { FormErrorAlert } from "@/components/common/form-feedback";
 
 const DisableBody = ({
   staff,

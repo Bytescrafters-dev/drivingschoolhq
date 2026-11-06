@@ -13,7 +13,9 @@ import {
 } from "@/shared/constants/pageUrls";
 
 const resolvePageHeader = (pathname: string) => {
-  if (pathname.startsWith(SETTINGS_BRANCHES)) return "Branches";
+  if (pathname.startsWith(SETTINGS_BRANCHES)) {
+    return pathname.endsWith("/profile") ? "Branch profile" : "Branches";
+  }
   if (pathname.startsWith(SETTINGS_STAFF)) return "Staff";
   switch (pathname) {
     case DASHBOARD:

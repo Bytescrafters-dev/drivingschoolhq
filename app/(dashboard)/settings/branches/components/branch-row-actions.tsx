@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import {
   ArrowRightLeftIcon,
   EyeIcon,
+  FileBadgeIcon,
   MoreHorizontalIcon,
   PencilIcon,
   RotateCcwIcon,
@@ -17,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { settingsBranchProfile } from "@/shared/constants/pageUrls";
 import type { BranchListItem } from "@/types/branch";
 
 export type BranchRowHandlers = {
@@ -69,6 +72,12 @@ export const BranchRowActions = ({
         <DropdownMenuItem onSelect={() => onView(branch)}>
           <EyeIcon />
           View
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href={settingsBranchProfile(branch.id)}>
+            <FileBadgeIcon />
+            Profile
+          </Link>
         </DropdownMenuItem>
         {canSwitch && (
           <DropdownMenuItem onSelect={() => onSwitch(branch)}>

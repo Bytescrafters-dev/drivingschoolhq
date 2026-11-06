@@ -26,8 +26,8 @@ import type { Staff, StaffOptions } from "@/types/staff";
 import {
   FormErrorAlert,
   SubmitButton,
-  WithStaffOptions,
-} from "./dialog-helpers";
+} from "@/components/common/form-feedback";
+import { WithStaffOptions } from "./dialog-helpers";
 
 const ChangeRoleForm = ({
   staff,

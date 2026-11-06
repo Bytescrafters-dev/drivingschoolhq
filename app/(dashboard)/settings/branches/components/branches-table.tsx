@@ -18,14 +18,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { BranchReadinessBadges } from "@/components/branches/branch-readiness-badges";
 import { districtLabel } from "@/shared/constants/districts";
+import { gradeLabel } from "@/shared/constants/grades";
 import { formatLkPhone } from "@/lib/phone";
+import { summariseCodes } from "@/lib/vehicle-classes";
 import type { BranchListItem } from "@/types/branch";
 import { BranchStatusBadge } from "./branch-status-badge";
 import { BranchRowActions, type BranchRowHandlers } from "./branch-row-actions";
 
 const LAST_ACTIVE_REASON = "A school must keep at least one active branch.";
-const HEADERS = ["Name", "District", "Phone", "Status", ""];
+const HEADERS = ["Name", "District", "Phone", "Grade", "Classes", "Status", ""];
 
 export const BranchesTableSkeleton = () => (
   <div className="overflow-hidden rounded-lg border" aria-busy="true">
@@ -122,9 +125,42 @@ export const BranchesTable = ({
       ),
     },
     {
+      id: "grade",
+      header: "Grade",
+      cell: ({ row }) => {
+        const { grade } = row.original.profile;
+        return grade ? (
+          <span className="whitespace-nowrap">{gradeLabel(grade)}</span>
+        ) : (
+          <span className="text-muted-foreground whitespace-nowrap">
+            Not set
+          </span>
+        );
+      },
+    },
+    {
+      id: "classes",
+      header: "Classes",
+      cell: ({ row }) => {
+        const codes = row.original.profile.offeredVehicleClasses;
+        return codes.length > 0 ? (
+          <span className="whitespace-nowrap" title={codes.join(", ")}>
+            {summariseCodes(codes)}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">None</span>
+        );
+      },
+    },
+    {
       id: "status",
       header: "Status",
-      cell: ({ row }) => <BranchStatusBadge branch={row.original} />,
+      cell: ({ row }) => (
+        <div className="flex flex-col items-start gap-1">
+          <BranchStatusBadge branch={row.original} />
+          <BranchReadinessBadges readiness={row.original.profile.readiness} />
+        </div>
+      ),
     },
     {
       id: "actions",

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { copyText } from "@/lib/clipboard";
 import { generateTemporaryPassword } from "@/lib/temp-password";
-import { FieldError, errorProps } from "./field-error";
+import { FieldError, errorProps } from "@/components/common/field-error";
 
 export const copyWithToast = async (text: string, what = "Copied") => {
   if (await copyText(text)) toast.success(what);
