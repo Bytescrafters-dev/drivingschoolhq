@@ -51,7 +51,8 @@ export const useCloseBranch = () => {
   const invalidate = useInvalidateBranches();
   return useMutation<CloseBranchResponse, ApiError, string>({
     mutationFn: closeBranch,
-    onSuccess: () => invalidate([queryKeys.staff.all]),
+    onSuccess: () =>
+      invalidate([queryKeys.staff.all, queryKeys.instructors.all]),
   });
 };
 
@@ -59,7 +60,8 @@ export const useReopenBranch = () => {
   const invalidate = useInvalidateBranches();
   return useMutation<Branch, ApiError, string>({
     mutationFn: reopenBranch,
-    onSuccess: () => invalidate([queryKeys.staff.all]),
+    onSuccess: () =>
+      invalidate([queryKeys.staff.all, queryKeys.instructors.all]),
   });
 };
 

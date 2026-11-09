@@ -1,5 +1,8 @@
 import type { District } from "@/shared/constants/districts";
+import type { Licence, LicenceChange, LicenceInput } from "@/types/licence";
 import type { DrivingSchoolGrade, VehicleClass } from "@/types/vehicle-class";
+
+export type { LicenceInput };
 
 export type { District };
 
@@ -45,20 +48,7 @@ export type BranchInput = {
 
 // ── Branch profile: licence, grade and offered vehicle classes ──────────────
 
-export type BranchLicence = {
-  id: string;
-  licenceNumber: string;
-  grade: DrivingSchoolGrade;
-  /** Calendar date 'YYYY-MM-DD' (no timezone). */
-  issuedOn: string;
-  /** Calendar date 'YYYY-MM-DD', the last valid day. */
-  expiresOn: string;
-  recordedByTenantUserId: string;
-  /** ISO instant: when it was recorded. */
-  createdAt: string;
-  /** ISO instant: last correction. */
-  updatedAt: string;
-};
+export type BranchLicence = Licence;
 
 export type ReadinessBlocker =
   | { code: "BRANCH_LICENCE_MISSING" }
@@ -97,14 +87,5 @@ export type BranchProfileSummary = {
   readiness: BranchReadiness;
 };
 
-export type LicenceInput = {
-  licenceNumber: string;
-  grade: DrivingSchoolGrade;
-  issuedOn: string;
-  expiresOn: string;
-};
-
 /** Record/renew/correct responses: classes dropped by a lower grade. */
-export type LicenceChangeResponse = BranchProfile & {
-  removedVehicleClasses: string[];
-};
+export type LicenceChangeResponse = BranchProfile & LicenceChange;

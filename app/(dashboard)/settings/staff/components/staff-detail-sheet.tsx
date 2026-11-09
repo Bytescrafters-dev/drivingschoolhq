@@ -11,6 +11,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StaffInstructorSummary } from "@/components/instructors/staff-instructor-summary";
 import { useStaffMember } from "@/hooks/staff/useStaff";
 import { ApiError } from "@/lib/api/client";
 import { formatDateTime } from "@/lib/dates";
@@ -153,6 +154,9 @@ const StaffDetail = ({
         </Row>
         <Row label="Last login">
           {staff.lastLoginAt ? formatDateTime(staff.lastLoginAt) : "Never"}
+        </Row>
+        <Row label="Instructor profile">
+          <StaffInstructorSummary userId={staff.id} />
         </Row>
         {staff.disabledAt && (
           <Row label="Disabled">{formatDateTime(staff.disabledAt)}</Row>

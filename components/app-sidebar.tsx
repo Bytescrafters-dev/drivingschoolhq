@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { IconDashboard, IconSettings } from "@tabler/icons-react";
+import { IconDashboard, IconSteeringWheel } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -20,14 +20,13 @@ import { usePermissions } from "@/hooks/auth/usePermissions";
 import { TenantPermission } from "@/shared/constants/permissions";
 import {
   DASHBOARD,
-  SETTINGS,
-  SETTINGS_BRANCHES,
-  SETTINGS_STAFF,
+  INSTRUCTORS,
+  MY_INSTRUCTOR_PROFILE,
 } from "@/shared/constants/pageUrls";
 
 // Central dashboard navigation. Add Administration / Customers sections here
 // as those features are implemented. Permission-gated items are UX only.
-const buildNav = (canManageStaff: boolean) => [
+const buildNav = (canViewInstructors: boolean) => [
   {
     title: "Dashboard",
     url: DASHBOARD,
@@ -35,12 +34,25 @@ const buildNav = (canManageStaff: boolean) => [
     collapsible: false,
     items: [],
   },
+  {
+    title: "Instructors",
+    url: INSTRUCTORS,
+    icon: IconSteeringWheel,
+    collapsible: true,
+    items: [
+      // Everyone may set up their own profile.
+      { title: "My instructor profile", url: MY_INSTRUCTOR_PROFILE },
+      ...(canViewInstructors
+        ? [{ title: "View instructors", url: INSTRUCTORS }]
+        : []),
+    ],
+  },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: me } = useMe();
   const { hasPermission } = usePermissions();
-  const navMain = buildNav(hasPermission(TenantPermission.STAFF_MANAGE));
+  const navMain = buildNav(hasPermission(TenantPermission.INSTRUCTORS_VIEW));
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>

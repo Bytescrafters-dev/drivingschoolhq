@@ -10,6 +10,8 @@ import {
   SETTINGS,
   SETTINGS_BRANCHES,
   SETTINGS_STAFF,
+  INSTRUCTORS,
+  MY_INSTRUCTOR_PROFILE,
 } from "@/shared/constants/pageUrls";
 
 const resolvePageHeader = (pathname: string) => {
@@ -17,6 +19,9 @@ const resolvePageHeader = (pathname: string) => {
     return pathname.endsWith("/profile") ? "Branch profile" : "Branches";
   }
   if (pathname.startsWith(SETTINGS_STAFF)) return "Staff";
+  if (pathname === MY_INSTRUCTOR_PROFILE) return "My instructor profile";
+  if (pathname === INSTRUCTORS) return "Instructors";
+  if (pathname.startsWith(`${INSTRUCTORS}/`)) return "Instructor";
   switch (pathname) {
     case DASHBOARD:
       return "Dashboard";

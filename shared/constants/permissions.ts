@@ -6,6 +6,8 @@
 export const TenantPermission = {
   BRANCHES_MANAGE: "BRANCHES_MANAGE",
   STAFF_MANAGE: "STAFF_MANAGE",
+  INSTRUCTORS_VIEW: "INSTRUCTORS_VIEW",
+  INSTRUCTORS_MANAGE: "INSTRUCTORS_MANAGE",
 } as const;
 
 export type TenantPermission =

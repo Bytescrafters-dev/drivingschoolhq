@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { z } from "zod";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,31 +24,39 @@ import {
   SubmitButton,
 } from "@/components/common/form-feedback";
 import {
-  useCorrectLicence,
-  useRecordLicence,
-} from "@/hooks/branches/useBranchProfileMutations";
-import {
   getApiErrorCode,
   isGloballyHandledError,
 } from "@/lib/api/error-messages";
 import { isValidCalendarDate } from "@/lib/dates";
 import { classesDroppedByGrade, permittedCodes } from "@/lib/vehicle-classes";
 import { DRIVING_SCHOOL_GRADES, gradeLabel } from "@/shared/constants/grades";
-import type {
-  BranchLicence,
-  BranchProfile,
-  LicenceChangeResponse,
-  LicenceInput,
-} from "@/types/branch";
-import type { VehicleClass } from "@/types/vehicle-class";
+import type { Licence, LicenceInput } from "@/types/licence";
+import type { DrivingSchoolGrade, VehicleClass } from "@/types/vehicle-class";
 
+/**
+ * - first: no licence yet (branch licence, or instructor profile setup);
+ * - renew: a new licence, the old one stays in the history;
+ * - correct: fix the current licence in place.
+ */
 export type LicenceDialogMode = "first" | "renew" | "correct";
 
-export type LicenceSaved = {
+export type LicenceDialogCopy = Record<
+  LicenceDialogMode,
+  { title: string; description: string; submit: string }
+>;
+
+/** The subset of a TanStack mutation the form needs. */
+export type LicenceMutation<TVariables, TResult> = {
+  mutateAsync: (variables: TVariables) => Promise<TResult>;
+  isPending: boolean;
+  error: unknown;
+};
+
+export type LicenceSaved<TResult> = {
   mode: LicenceDialogMode;
-  response: LicenceChangeResponse;
-  /** The profile before the change, to compare permitted classes. */
-  previous: BranchProfile;
+  response: TResult;
+  /** Grade before the change (null for the first licence). */
+  previousGrade: DrivingSchoolGrade | null;
 };
 
 const calendarDate = (label: string) =>
@@ -84,33 +92,9 @@ const schema = z
   });
 type Form = z.infer<typeof schema>;
 
-const COPY: Record<
-  LicenceDialogMode,
-  { title: string; description: string; submit: string }
-> = {
-  first: {
-    title: "Add licence",
-    description:
-      "Record the branch's driving-school licence. Its grade decides which vehicle classes the branch may offer.",
-    submit: "Add licence",
-  },
-  renew: {
-    title: "Renew licence",
-    description:
-      "Record the new licence issued by the DMT. The current licence stays in the licence history.",
-    submit: "Save renewal",
-  },
-  correct: {
-    title: "Edit licence details",
-    description:
-      "Fix a mistake in the current licence. This doesn't add a new licence to the history.",
-    submit: "Save changes",
-  },
-};
-
 const defaultValues = (
   mode: LicenceDialogMode,
-  licence: BranchLicence | null,
+  licence: Licence | null,
 ): Partial<Form> => {
   if (!licence || mode === "first") {
     return { licenceNumber: "", issuedOn: "", expiresOn: "" };
@@ -132,7 +116,7 @@ const defaultValues = (
 };
 
 /** Only the fields that differ from the current licence. */
-const changedFields = (values: LicenceInput, licence: BranchLicence) => {
+const changedFields = (values: LicenceInput, licence: Licence) => {
   const patch: Partial<LicenceInput> = {};
   if (values.licenceNumber !== licence.licenceNumber) {
     patch.licenceNumber = values.licenceNumber;
@@ -145,37 +129,53 @@ const changedFields = (values: LicenceInput, licence: BranchLicence) => {
   return patch;
 };
 
-// Errors that mean the dialog no longer applies; the hooks refetch.
-const CLOSING_CODES: Record<string, string | null> = {
-  BRANCH_CLOSED: "Reopen the branch to edit its profile.",
-  BRANCH_LICENCE_MISSING: "This branch has no licence yet. Add it first.",
-  BRANCH_NOT_FOUND: null, // The page shows "not found" after the refetch.
-};
-
-type FormProps = {
+export type LicenceFormProps<TResult> = {
   mode: LicenceDialogMode;
-  branchId: string;
-  profile: BranchProfile;
+  /** The current licence (ignored for `first`). */
+  current: Licence | null;
+  /** Classes now offered/qualified: used to warn before a lower grade. */
+  selectedCodes: string[];
   classes: VehicleClass[];
+  copy: LicenceDialogCopy;
+  /** Follows "Grade X doesn't permit CE, DE." in the confirm step. */
+  removalNote: ReactNode;
+  numberPlaceholder?: string;
+  mutations: {
+    first: LicenceMutation<LicenceInput, TResult>;
+    renew: LicenceMutation<LicenceInput, TResult>;
+    correct: LicenceMutation<Partial<LicenceInput>, TResult>;
+  };
+  /**
+   * Error codes that mean the dialog no longer applies: it closes and toasts
+   * the message (if any). The hooks refetch stale data.
+   */
+  closingCodes: Record<string, string | null>;
+  /** Called after closing for one of `closingCodes` (e.g. a plan-limit dialog). */
+  onClosingError?: (code: string, error: unknown) => void;
   onDone: () => void;
-  onSaved: (saved: LicenceSaved) => void;
+  onSaved: (saved: LicenceSaved<TResult>) => void;
 };
 
-const LicenceForm = ({
+/** Licence number, grade and dates, with a lower-grade confirm step. */
+export const LicenceForm = <TResult,>({
   mode,
-  branchId,
-  profile,
+  current,
+  selectedCodes,
   classes,
+  copy,
+  removalNote,
+  numberPlaceholder,
+  mutations,
+  closingCodes,
+  onClosingError,
   onDone,
   onSaved,
-}: FormProps) => {
-  const licence = mode === "first" ? null : profile.currentLicence;
-  const record = useRecordLicence(branchId);
-  const correct = useCorrectLicence(branchId);
-  const mutation = mode === "correct" ? correct : record;
-  const copy = COPY[mode];
+}: LicenceFormProps<TResult>) => {
+  const licence = mode === "first" ? null : current;
+  const mutation = mutations[mode];
+  const text = copy[mode];
 
-  // Set when a lower grade would remove offered classes.
+  // Set when a lower grade would remove selected classes.
   const [confirm, setConfirm] = useState<{
     values: Form;
     dropped: string[];
@@ -199,10 +199,11 @@ const LicenceForm = ({
       setError("expiresOn", { message: "Expiry must be after the issue date" });
       return;
     }
-    if (code && code in CLOSING_CODES) {
-      const message = CLOSING_CODES[code];
+    if (code && code in closingCodes) {
+      const message = closingCodes[code];
       if (message) toast.error(message);
       onDone();
+      onClosingError?.(code, error);
       return;
     }
     if (isGloballyHandledError(error)) {
@@ -214,33 +215,31 @@ const LicenceForm = ({
   };
 
   const save = async (values: Form) => {
+    const previousGrade = mode === "first" ? null : (current?.grade ?? null);
     try {
-      let response: LicenceChangeResponse;
+      let response: TResult;
       if (mode === "correct" && licence) {
         const patch = changedFields(values, licence);
         if (Object.keys(patch).length === 0) {
           onDone();
           return;
         }
-        response = await correct.mutateAsync(patch);
+        response = await mutations.correct.mutateAsync(patch);
       } else {
-        response = await record.mutateAsync(values);
+        response = await mutations[mode === "first" ? "first" : "renew"].mutateAsync(
+          values,
+        );
       }
       onDone();
-      onSaved({ mode, response, previous: profile });
+      onSaved({ mode, response, previousGrade });
     } catch (error) {
       onError(error);
     }
   };
 
   const onSubmit = (values: Form) => {
-    const current = profile.currentLicence;
     if (mode !== "first" && current && values.grade !== current.grade) {
-      const dropped = classesDroppedByGrade(
-        profile.offeredVehicleClasses.map((c) => c.code),
-        values.grade,
-        classes,
-      );
+      const dropped = classesDroppedByGrade(selectedCodes, values.grade, classes);
       if (dropped.length > 0) {
         setConfirm({ values, dropped });
         return;
@@ -259,8 +258,7 @@ const LicenceForm = ({
             <strong className="text-foreground font-medium">
               {confirm.dropped.join(", ")}
             </strong>
-            . They will be removed from this branch&apos;s classes. Existing
-            customers and applications are not affected.
+            . {removalNote}
           </DialogDescription>
         </DialogHeader>
         <FormErrorAlert error={mutation.error} />
@@ -286,21 +284,16 @@ const LicenceForm = ({
     );
   }
 
-  const fieldErrorCodes = [
-    "INVALID_LICENCE_DATES",
-    ...Object.keys(CLOSING_CODES),
-  ];
-  const alertError = fieldErrorCodes.includes(
-    getApiErrorCode(mutation.error) ?? "",
-  )
+  const handledCodes = ["INVALID_LICENCE_DATES", ...Object.keys(closingCodes)];
+  const alertError = handledCodes.includes(getApiErrorCode(mutation.error) ?? "")
     ? null
     : mutation.error;
 
   return (
     <>
       <DialogHeader>
-        <DialogTitle>{copy.title}</DialogTitle>
-        <DialogDescription>{copy.description}</DialogDescription>
+        <DialogTitle>{text.title}</DialogTitle>
+        <DialogDescription>{text.description}</DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5" noValidate>
         <div className="grid gap-2">
@@ -308,7 +301,7 @@ const LicenceForm = ({
           <Input
             id="licence-number"
             autoComplete="off"
-            placeholder="e.g. DS/WP/0042"
+            placeholder={numberPlaceholder}
             {...errorProps(
               "licence-number-error",
               errors.licenceNumber?.message,
@@ -404,34 +397,27 @@ const LicenceForm = ({
           <Button type="button" variant="outline" onClick={onDone}>
             Cancel
           </Button>
-          <SubmitButton pending={mutation.isPending}>
-            {copy.submit}
-          </SubmitButton>
+          <SubmitButton pending={mutation.isPending}>{text.submit}</SubmitButton>
         </DialogFooter>
       </form>
     </>
   );
 };
 
-type Props = Omit<FormProps, "mode" | "onDone"> & {
-  /** Null while closed. */
-  mode: LicenceDialogMode | null;
+/**
+ * Dialog frame. Render the feature's form body (which calls its mutation
+ * hooks) as children, keyed per open so every open starts fresh.
+ */
+export const LicenceDialogFrame = ({
+  open,
+  onOpenChange,
+  children,
+}: {
+  open: boolean;
   onOpenChange: (open: boolean) => void;
-};
-
-/** Add the first licence, renew it, or correct the current one. */
-export const LicenceDialog = ({ mode, onOpenChange, ...formProps }: Props) => (
-  <Dialog open={mode !== null} onOpenChange={onOpenChange}>
-    <DialogContent className="sm:max-w-lg">
-      {/* Keyed so each open starts from fresh values and mutation state. */}
-      {mode && (
-        <LicenceForm
-          key={mode}
-          mode={mode}
-          onDone={() => onOpenChange(false)}
-          {...formProps}
-        />
-      )}
-    </DialogContent>
+  children: ReactNode;
+}) => (
+  <Dialog open={open} onOpenChange={onOpenChange}>
+    <DialogContent className="sm:max-w-lg">{open && children}</DialogContent>
   </Dialog>
 );

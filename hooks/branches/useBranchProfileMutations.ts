@@ -64,7 +64,11 @@ const useProfileMutation = <TVariables, TResult extends BranchProfile>(
     mutationFn,
     onSuccess: (profile) => {
       storeProfile(queryClient, branchId, profile);
-      return invalidateBranchSummaries(queryClient);
+      // Offered classes decide what instructors can teach here.
+      return Promise.all([
+        invalidateBranchSummaries(queryClient),
+        queryClient.invalidateQueries({ queryKey: queryKeys.instructors.all }),
+      ]);
     },
     onError: (error) => {
       const code = getApiErrorCode(error);

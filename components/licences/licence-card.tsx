@@ -1,4 +1,5 @@
-import { FileBadgeIcon, PencilIcon, PlusIcon, RefreshCwIcon } from "lucide-react";
+import type { ReactNode } from "react";
+import { FileBadgeIcon, PencilIcon, RefreshCwIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,21 +10,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  AMBER_BADGE,
-  daysLeftLabel,
-} from "@/components/branches/branch-readiness-badges";
+import { AMBER_BADGE, daysLeftLabel } from "@/components/licences/expiry";
 import { formatCalendarDate, formatDateTime } from "@/lib/dates";
 import { gradeLabel } from "@/shared/constants/grades";
-import type { BranchProfile } from "@/types/branch";
-import type { LicenceDialogMode } from "./licence-dialog";
+import type { Licence, LicenceExpiry } from "@/types/licence";
 
 const Field = ({
   label,
   children,
 }: {
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) => (
   <div className="grid gap-1">
     <dt className="text-muted-foreground text-xs">{label}</dt>
@@ -34,33 +31,48 @@ const Field = ({
 );
 
 type Props = {
-  profile: BranchProfile;
-  /** Set for managers on an open branch. */
-  onOpenDialog?: (mode: LicenceDialogMode) => void;
+  title: string;
+  description: string;
+  licence: Licence | null;
+  expiry?: LicenceExpiry;
+  /** Renew / Edit details; omitted for read-only viewers. */
+  onRenew?: () => void;
+  onCorrect?: () => void;
+  /** Shown without a licence (title, text, optional action button). */
+  empty: { title: string; description: string; action?: ReactNode };
 };
 
-export const LicenceCard = ({ profile, onOpenDialog }: Props) => {
-  const licence = profile.currentLicence;
-  const expiry = profile.readiness.warnings[0];
+/** Current licence: number, grade, dates, and the Renew / Edit actions. */
+export const LicenceCard = ({
+  title,
+  description,
+  licence,
+  expiry,
+  onRenew,
+  onCorrect,
+  empty,
+}: Props) => {
+  const canChange = Boolean(onRenew || onCorrect);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Driving-school licence</CardTitle>
-        <CardDescription>
-          The licence grade decides which vehicle classes this branch may
-          offer.
-        </CardDescription>
-        {licence && onOpenDialog && (
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+        {licence && canChange && (
           <CardAction className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => onOpenDialog("renew")}>
-              <RefreshCwIcon />
-              Renew licence
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => onOpenDialog("correct")}>
-              <PencilIcon />
-              Edit details
-            </Button>
+            {onRenew && (
+              <Button variant="outline" size="sm" onClick={onRenew}>
+                <RefreshCwIcon />
+                Renew licence
+              </Button>
+            )}
+            {onCorrect && (
+              <Button variant="ghost" size="sm" onClick={onCorrect}>
+                <PencilIcon />
+                Edit details
+              </Button>
+            )}
           </CardAction>
         )}
       </CardHeader>
@@ -75,20 +87,20 @@ export const LicenceCard = ({ profile, onOpenDialog }: Props) => {
               </Field>
               <Field label="Expires on">
                 {formatCalendarDate(licence.expiresOn)}
-                {expiry?.code === "BRANCH_LICENCE_EXPIRED" && (
+                {expiry?.kind === "expired" && (
                   <Badge variant="destructive">Expired</Badge>
                 )}
-                {expiry?.code === "BRANCH_LICENCE_EXPIRING" && (
+                {expiry?.kind === "expiring" && (
                   <Badge className={AMBER_BADGE}>
                     Expires {daysLeftLabel(expiry.daysLeft)}
                   </Badge>
                 )}
               </Field>
             </dl>
-            {onOpenDialog && (
+            {canChange && (
               <p className="text-muted-foreground text-xs">
-                <strong className="font-medium">Renew</strong> when the DMT
-                issues a new licence: the current one stays in the history.{" "}
+                <strong className="font-medium">Renew</strong> when a new
+                licence is issued: the current one stays in the history.{" "}
                 <strong className="font-medium">Edit details</strong> only to
                 fix a mistake.
                 {licence.updatedAt !== licence.createdAt &&
@@ -98,18 +110,15 @@ export const LicenceCard = ({ profile, onOpenDialog }: Props) => {
           </>
         ) : (
           <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed p-8 text-center">
-            <FileBadgeIcon className="text-muted-foreground size-6" aria-hidden />
-            <p className="font-medium">No licence recorded</p>
+            <FileBadgeIcon
+              className="text-muted-foreground size-6"
+              aria-hidden
+            />
+            <p className="font-medium">{empty.title}</p>
             <p className="text-muted-foreground max-w-sm text-sm">
-              Without a licence the branch has no grade, so it can&apos;t offer
-              vehicle classes.
+              {empty.description}
             </p>
-            {onOpenDialog && (
-              <Button size="sm" className="mt-2" onClick={() => onOpenDialog("first")}>
-                <PlusIcon />
-                Add licence
-              </Button>
-            )}
+            {empty.action && <div className="mt-2">{empty.action}</div>}
           </div>
         )}
       </CardContent>

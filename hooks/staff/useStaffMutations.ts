@@ -38,8 +38,12 @@ const useStaffMutation = <TVariables>(
   const queryClient = useQueryClient();
   return useMutation<Staff, ApiError, TVariables>({
     mutationFn,
+    // Staff status, role and branches also decide instructor lists and flags.
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: queryKeys.staff.all }),
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.staff.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.instructors.all }),
+      ]),
     onError: (error) => {
       const code = getApiErrorCode(error);
       if (code && STALE_ROW_CODES.has(code)) {

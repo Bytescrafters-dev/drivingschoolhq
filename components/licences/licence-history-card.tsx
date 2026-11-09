@@ -25,14 +25,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCalendarDate, formatDateTime } from "@/lib/dates";
-import type { BranchProfile } from "@/types/branch";
+import type { Licence } from "@/types/licence";
 
-/** Every licence recorded for the branch, newest first. */
-export const LicenceHistoryCard = ({ profile }: { profile: BranchProfile }) => {
-  const history = profile.licenceHistory;
+/** Every licence recorded, newest first (current included). */
+export const LicenceHistoryCard = ({
+  history,
+  currentId,
+}: {
+  history: Licence[];
+  currentId: string | undefined;
+}) => {
   if (history.length === 0) return null;
 
-  const currentId = profile.currentLicence?.id;
   const count = `${history.length} ${history.length === 1 ? "licence" : "licences"} recorded.`;
 
   return (

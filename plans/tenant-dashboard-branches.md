@@ -11,8 +11,9 @@
 2. **Settings → Branches**: listing, viewing, creating, editing, closing and reopening branches,
    depending on the user's role.
 
-This doc replaces `plans/tenant-branches-frontend.md` §3–§5 for the dashboard. The backend contract
-is the same.
+Related: staff management is in `plans/tenant-dashboard-staff.md`; the branch profile (licence,
+grade, vehicle classes) is in `plans/tenant-dashboard-branch-profile.md`; instructors are in
+`plans/tenant-dashboard-instructors.md`.
 
 **All calls go through the BFF:** `fetch('/api/proxy/<backend path>')` via `apiFetch`. Never call the
 API directly, and never send a `tenantId`; the backend takes the school from the session.

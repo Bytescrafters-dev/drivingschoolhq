@@ -38,6 +38,12 @@ const MESSAGES: Record<string, string> = {
   UNKNOWN_VEHICLE_CLASS:
     "One of the vehicle classes isn't recognised. Reload and try again.",
   BRANCH_LICENCE_MISSING: "Add this branch's licence first.",
+  INSTRUCTOR_MANAGEMENT_DENIED:
+    "You can't change this person's instructor profile.",
+  INSTRUCTOR_NOT_FOUND: "Instructor not found.",
+  INSTRUCTOR_PROFILE_EXISTS: "This person already has an instructor profile.",
+  INSTRUCTOR_PROFILE_MISSING: "This person has no instructor profile yet.",
+  STAFF_DISABLED: "Enable this staff member first.",
   VEHICLE_CLASS_NOT_PERMITTED:
     "The branch grade changed. Review the classes again.",
 };

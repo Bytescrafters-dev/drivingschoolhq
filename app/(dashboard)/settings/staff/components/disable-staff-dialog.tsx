@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { useInstructor } from "@/hooks/instructors/useInstructors";
 import { useDisableStaff } from "@/hooks/staff/useStaffMutations";
 import type { Staff } from "@/types/staff";
 import { FormErrorAlert } from "@/components/common/form-feedback";
@@ -24,6 +25,9 @@ const DisableBody = ({
   onDone: () => void;
 }) => {
   const disable = useDisableStaff();
+  // 404 = no instructor profile; only an ACTIVE one keeps a seat.
+  const instructor = useInstructor(staff.id);
+  const keepsInstructorSeat = instructor.data?.profileStatus === "ACTIVE";
 
   return (
     <>
@@ -32,6 +36,8 @@ const DisableBody = ({
         <AlertDialogDescription>
           {staff.fullName} will be signed out immediately and can&apos;t sign
           in. Their history is kept. This frees a staff seat.
+          {keepsInstructorSeat &&
+            " Their instructor profile stays active and keeps its seat until you inactivate it."}
         </AlertDialogDescription>
       </AlertDialogHeader>
       <FormErrorAlert error={disable.error} />

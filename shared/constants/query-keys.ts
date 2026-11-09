@@ -1,3 +1,4 @@
+import type { InstructorProfileState } from "@/types/instructor";
 import type { StaffListFilters } from "@/types/staff";
 
 export const queryKeys = {
@@ -17,5 +18,16 @@ export const queryKeys = {
     list: (filters: StaffListFilters) => ["staff", "list", filters] as const,
     detail: (id: string) => ["staff", id] as const,
     options: ["staff", "options"] as const,
+  },
+  instructors: {
+    all: ["instructors"] as const,
+    /** Branch-scoped. `status` null = all. */
+    list: (branchId: string, status: InstructorProfileState | null) =>
+      ["instructors", "list", branchId, status] as const,
+    /** Branch-scoped. */
+    candidates: (branchId: string) =>
+      ["instructors", "candidates", branchId] as const,
+    detail: (userId: string) => ["instructors", "detail", userId] as const,
+    mine: ["instructors", "me"] as const,
   },
 };

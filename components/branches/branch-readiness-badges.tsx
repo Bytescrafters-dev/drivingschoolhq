@@ -1,13 +1,6 @@
 import { Badge } from "@/components/ui/badge";
+import { AMBER_BADGE, daysLeftLabel } from "@/components/licences/expiry";
 import type { BranchReadiness } from "@/types/branch";
-
-export const AMBER_BADGE =
-  "border-transparent bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200";
-
-export const daysLeftLabel = (daysLeft: number) =>
-  daysLeft === 0
-    ? "today"
-    : `in ${daysLeft} ${daysLeft === 1 ? "day" : "days"}`;
 
 /** Compact profile hints for lists: incomplete, expired, expiring. */
 export const BranchReadinessBadges = ({

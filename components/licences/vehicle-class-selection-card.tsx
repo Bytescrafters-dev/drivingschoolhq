@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { CheckIcon, InfoIcon, Loader2Icon, PencilIcon, XIcon } from "lucide-react";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,15 +30,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useSetOfferedClasses } from "@/hooks/branches/useBranchProfileMutations";
-import {
-  getApiErrorCode,
-  getApiErrorMessage,
-  isGloballyHandledError,
-} from "@/lib/api/error-messages";
 import { gradeRestriction } from "@/lib/vehicle-classes";
 import { cn } from "@/lib/utils";
-import type { BranchProfile } from "@/types/branch";
 import type { VehicleClass } from "@/types/vehicle-class";
 
 const ClassTile = ({
@@ -119,46 +111,70 @@ const ClassTile = ({
   );
 };
 
+export type ClassSelectionSave = {
+  /** Sends the full selection; call `onSettled(true)` to leave edit mode. */
+  submit: (codes: string[], onSettled: (stopEditing: boolean) => void) => void;
+  isPending: boolean;
+};
+
 type Props = {
-  branchId: string;
-  profile: BranchProfile;
+  title: string;
+  /** Under the title, e.g. "12 of 13 permitted classes offered." */
+  description: string;
+  /** All 13 classes, DMT order. */
   classes: VehicleClass[];
-  /** Managers on an open branch. */
+  /** What the current grade permits (empty without a licence). */
+  permittedCodes: string[];
+  /** Offered (branch) or qualified (instructor) codes. */
+  selectedCodes: string[];
+  hasLicence: boolean;
   canEdit: boolean;
   editing: boolean;
   onEditingChange: (editing: boolean) => void;
   /** Guidance after a licence change (e.g. "untick what you don't offer"). */
   hint: string | null;
   onDismissHint: () => void;
+  save: ClassSelectionSave;
+  /** Accessible name of the checkbox group. */
+  legend: string;
+  /** Shown under the grid while editing. */
+  editNote?: string;
+  emptyConfirm: { title: string; description: string; confirm: string };
 };
 
-export const VehicleClassCard = ({
-  branchId,
-  profile,
+/** The 13-class grid: read-only, or a checklist limited to the grade. */
+export const VehicleClassSelectionCard = ({
+  title,
+  description,
   classes,
+  permittedCodes,
+  selectedCodes,
+  hasLicence,
   canEdit,
   editing,
   onEditingChange,
   hint,
   onDismissHint,
+  save,
+  legend,
+  editNote,
+  emptyConfirm,
 }: Props) => {
-  const hasLicence = profile.currentLicence !== null;
-  const permitted = new Set(profile.permittedVehicleClasses.map((c) => c.code));
-  const offered = profile.offeredVehicleClasses.map((c) => c.code);
+  const permitted = new Set(permittedCodes);
   const isEditing = editing && canEdit && hasLicence;
 
   return (
     <Card id="vehicle-classes" className="scroll-mt-4">
       <CardHeader>
-        <CardTitle>Vehicle classes</CardTitle>
-        <CardDescription>
-          {hasLicence
-            ? `${offered.length} of ${permitted.size} permitted classes offered.`
-            : "Add the licence first to set the grade."}
-        </CardDescription>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
         {canEdit && hasLicence && !isEditing && (
           <CardAction>
-            <Button variant="outline" size="sm" onClick={() => onEditingChange(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onEditingChange(true)}
+            >
               <PencilIcon />
               Edit
             </Button>
@@ -168,24 +184,29 @@ export const VehicleClassCard = ({
       {isEditing ? (
         // Mounted per edit session so the selection starts from the saved set.
         <ClassEditor
-          branchId={branchId}
           classes={classes}
           permitted={permitted}
-          offered={offered}
+          initial={selectedCodes}
           hint={hint}
           onDismissHint={onDismissHint}
           onDone={() => onEditingChange(false)}
+          save={save}
+          legend={legend}
+          editNote={editNote}
+          emptyConfirm={emptyConfirm}
         />
       ) : (
         <CardContent className="grid gap-4">
-          {hint && hasLicence && <HintAlert hint={hint} onDismiss={onDismissHint} />}
+          {hint && hasLicence && (
+            <HintAlert hint={hint} onDismiss={onDismissHint} />
+          )}
           <ClassGrid>
             {classes.map((vc) => (
               <ClassTile
                 key={vc.code}
                 vehicleClass={vc}
                 permitted={permitted.has(vc.code)}
-                checked={offered.includes(vc.code)}
+                checked={selectedCodes.includes(vc.code)}
               />
             ))}
           </ClassGrid>
@@ -222,24 +243,29 @@ const HintAlert = ({
 );
 
 const ClassEditor = ({
-  branchId,
   classes,
   permitted,
-  offered,
+  initial,
   hint,
   onDismissHint,
   onDone,
+  save,
+  legend,
+  editNote,
+  emptyConfirm,
 }: {
-  branchId: string;
   classes: VehicleClass[];
   permitted: Set<string>;
-  offered: string[];
+  initial: string[];
   hint: string | null;
   onDismissHint: () => void;
   onDone: () => void;
+  save: ClassSelectionSave;
+  legend: string;
+  editNote?: string;
+  emptyConfirm: Props["emptyConfirm"];
 }) => {
-  const save = useSetOfferedClasses(branchId);
-  const [selected, setSelected] = useState(() => new Set(offered));
+  const [selected, setSelected] = useState(() => new Set(initial));
   const [confirmEmpty, setConfirmEmpty] = useState(false);
 
   // Only what the current grade permits is shown ticked, and sent. If the
@@ -257,34 +283,9 @@ const ClassEditor = ({
     });
 
   const submit = () =>
-    save.mutate(codes, {
-      onSuccess: () => {
-        toast.success("Vehicle classes saved");
-        onDismissHint();
-        onDone();
-      },
-      onError: (error) => {
-        setConfirmEmpty(false);
-        const code = getApiErrorCode(error);
-        if (code === "VEHICLE_CLASS_NOT_PERMITTED") {
-          // The profile refetches; keep editing against the new grade.
-          toast.error(getApiErrorMessage(error));
-          return;
-        }
-        if (code === "BRANCH_CLOSED") {
-          toast.error("Reopen the branch to edit its profile.");
-          onDone();
-          return;
-        }
-        if (isGloballyHandledError(error)) {
-          onDone();
-          return;
-        }
-        toast.error(getApiErrorMessage(error));
-        if (code === "BRANCH_LICENCE_MISSING" || code === "BRANCH_NOT_FOUND") {
-          onDone();
-        }
-      },
+    save.submit(codes, (stopEditing) => {
+      setConfirmEmpty(false);
+      if (stopEditing) onDone();
     });
 
   const onSave = () => {
@@ -297,7 +298,7 @@ const ClassEditor = ({
       <CardContent className="grid gap-4">
         {hint && <HintAlert hint={hint} onDismiss={onDismissHint} />}
         <fieldset disabled={save.isPending}>
-          <legend className="sr-only">Vehicle classes this branch offers</legend>
+          <legend className="sr-only">{legend}</legend>
           <ClassGrid>
             {classes.map((vc) => (
               <ClassTile
@@ -310,10 +311,9 @@ const ClassEditor = ({
             ))}
           </ClassGrid>
         </fieldset>
-        <p className="text-muted-foreground text-xs">
-          Removing a class only affects new applications. Customers and
-          applications that already have it are not affected.
-        </p>
+        {editNote && (
+          <p className="text-muted-foreground text-xs">{editNote}</p>
+        )}
       </CardContent>
       <CardFooter className="flex flex-wrap justify-end gap-2">
         <Button variant="outline" onClick={onDone} disabled={save.isPending}>
@@ -328,14 +328,15 @@ const ClassEditor = ({
       <AlertDialog open={confirmEmpty} onOpenChange={setConfirmEmpty}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Offer no vehicle classes?</AlertDialogTitle>
+            <AlertDialogTitle>{emptyConfirm.title}</AlertDialogTitle>
             <AlertDialogDescription>
-              This branch will offer no classes and can&apos;t take
-              class-dependent work.
+              {emptyConfirm.description}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={save.isPending}>Back</AlertDialogCancel>
+            <AlertDialogCancel disabled={save.isPending}>
+              Back
+            </AlertDialogCancel>
             <AlertDialogAction
               disabled={save.isPending}
               onClick={(event) => {
@@ -345,7 +346,7 @@ const ClassEditor = ({
               }}
             >
               {save.isPending && <Loader2Icon className="animate-spin" />}
-              Save with no classes
+              {emptyConfirm.confirm}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
